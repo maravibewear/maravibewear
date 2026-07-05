@@ -752,3 +752,17 @@ ul {
 [hidden] {
   display: none !important;
 }
+
+.header__logo-img {
+  height: 32px; /* Ajustá este número según la proporción de tu logo */
+  width: auto;
+  display: block;
+}
+
+.footer__logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
+  /* Si tu footer es oscuro y tu logo es negro, descomentá la siguiente línea para volverlo blanco: */
+  /* filter: brightness(0) invert(1); */
+}
