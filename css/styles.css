@@ -766,3 +766,16 @@ ul {
   /* Si tu footer es oscuro y tu logo es negro, descomentá la siguiente línea para volverlo blanco: */
   /* filter: brightness(0) invert(1); */
 }
+
+.product-card__sizes {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+  align-self: flex-start;
+  border: 1px solid var(--color-border);
+}
