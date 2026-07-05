@@ -754,13 +754,13 @@ ul {
 }
 
 .header__logo-img {
-  height: 32px; /* Ajustá este número según la proporción de tu logo */
+  height: 80px; /* Ajustá este número según la proporción de tu logo */
   width: auto;
   display: block;
 }
 
 .footer__logo-img {
-  height: 40px;
+  height: 60px;
   width: auto;
   display: block;
   /* Si tu footer es oscuro y tu logo es negro, descomentá la siguiente línea para volverlo blanco: */
