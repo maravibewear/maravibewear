@@ -1,251 +1,113 @@
-/**
- * cart.js — Lógica del carrito de compras y pedido por WhatsApp
- */
-
-/** Clave de localStorage para persistir el carrito */
 const STORAGE_KEY = 'maravibewear_cart';
-
-/**
- * Número de WhatsApp con código de país (sin + ni espacios).
- * Ejemplo Argentina: 5492236613489
- * @type {string}
- */
 export const WHATSAPP_NUMBER = '5491157089345';
 
-/** @type {Map<string, number>} id → cantidad */
 let cart = loadCart();
 
-/**
- * Carga el carrito desde localStorage.
- * @returns {Map<string, number>}
- */
 function loadCart() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return new Map();
-    const parsed = JSON.parse(saved);
-    return new Map(Object.entries(parsed).map(([k, v]) => [k, Number(v)]));
-  } catch {
-    return new Map();
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } 
+  catch { return []; }
 }
 
-/**
- * Persiste el carrito en localStorage.
- */
-function saveCart() {
-  const obj = Object.fromEntries(cart);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-}
+function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
 
-/**
- * @returns {Map<string, number>}
- */
-export function getCart() {
-  return cart;
-}
+export function getCart() { return cart; }
 
-/**
- * @returns {number} Total de unidades en el carrito
- */
 export function getCartItemCount() {
-  let total = 0;
-  cart.forEach((qty) => { total += qty; });
-  return total;
+  return cart.reduce((total, item) => total + item.cantidad, 0);
 }
 
-/**
- * Agrega un producto al carrito (o incrementa cantidad).
- * @param {string} productId
- * @param {number} [qty=1]
- */
-export function addToCart(productId, qty = 1) {
-  const current = cart.get(productId) || 0;
-  cart.set(productId, current + qty);
-  saveCart();
-}
-
-/**
- * Actualiza la cantidad de un producto.
- * Si qty <= 0, elimina el producto.
- * @param {string} productId
- * @param {number} qty
- */
-export function updateQuantity(productId, qty) {
-  if (qty <= 0) {
-    cart.delete(productId);
+export function addToCart(product, quantity, options) {
+  const variantId = `${product.id}-${options.tipo}-${options.color}-${options.talle}`;
+  const existing = cart.find(i => i.variantId === variantId);
+  if (existing) {
+    existing.cantidad += quantity;
   } else {
-    cart.set(productId, qty);
+    cart.push({
+      variantId, id: product.id, nombre: product.nombre, 
+      imagen: product.imagenes[0], precio: options.precio,
+      tipo: options.tipo, color: options.color, talle: options.talle,
+      cantidad: quantity, descBulto: product.descBulto
+    });
   }
   saveCart();
 }
 
-/**
- * Elimina un producto del carrito.
- * @param {string} productId
- */
-export function removeFromCart(productId) {
-  cart.delete(productId);
+export function updateQuantity(variantId, newQty) {
+  const item = cart.find(i => i.variantId === variantId);
+  if (item) {
+    item.cantidad = Math.max(1, newQty);
+    saveCart();
+  }
+}
+
+export function removeFromCart(variantId) {
+  cart = cart.filter(i => i.variantId !== variantId);
   saveCart();
 }
 
-/**
- * Vacía el carrito por completo.
- */
-export function clearCart() {
-  cart = new Map();
-  saveCart();
-}
+export function clearCart() { cart = []; saveCart(); }
 
-/**
- * Formatea un número como precio en pesos argentinos.
- * @param {number} amount
- * @returns {string}
- */
 export function formatPrice(amount) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(amount);
 }
 
-/**
- * Calcula el total del carrito dado un mapa de productos.
- * @param {object[]} products
- * @returns {{ items: object[], total: number }}
- */
-export function getCartDetails(products) {
-  const productMap = new Map(products.map((p) => [p.id, p]));
-  const items = [];
-  let total = 0;
-
-  cart.forEach((qty, id) => {
-    const product = productMap.get(id);
-    if (!product) return;
-
-    const subtotal = product.precio * qty;
-    total += subtotal;
-
-    items.push({
-      ...product,
-      cantidad: qty,
-      subtotal,
-    });
-  });
-
-  return { items, total };
+function escapeHtml(unsafe) {
+  return String(unsafe).replace(/[&<"'>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m] || '&#039;');
 }
 
-/**
- * Genera el mensaje de texto para WhatsApp.
- * @param {object[]} products
- * @returns {string}
- */
-export function buildWhatsAppMessage(products) {
-  const { items, total } = getCartDetails(products);
+export function renderCart(bodyEl, footerEl, totalEl, badgeEl) {
+  badgeEl.textContent = getCartItemCount();
+  badgeEl.hidden = cart.length === 0;
 
-  if (items.length === 0) return '';
-
-  const lines = [
-    '🛍️ *Nuevo pedido — Maravibewear*',
-    '',
-    '*Detalle del pedido:*',
-    '',
-  ];
-
-  items.forEach((item, index) => {
-    lines.push(`${index + 1}. *${item.nombre}*`);
-    lines.push(`   Cantidad: ${item.cantidad}`);
-    lines.push(`   Precio unitario: ${formatPrice(item.precio)}`);
-    lines.push(`   Subtotal: ${formatPrice(item.subtotal)}`);
-    lines.push('');
-  });
-
-  lines.push('─────────────────');
-  lines.push(`*TOTAL: ${formatPrice(total)}*`);
-  lines.push('');
-  lines.push('_Pedido generado desde la tienda online_');
-
-  return lines.join('\n');
-}
-
-/**
- * Abre WhatsApp con el mensaje del pedido pre-cargado.
- * @param {object[]} products
- */
-export function sendWhatsAppOrder(products) {
-  const message = buildWhatsAppMessage(products);
-  if (!message) return;
-
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
-/**
- * Renderiza los items del carrito en el drawer.
- * @param {HTMLElement} bodyEl
- * @param {HTMLElement} footerEl
- * @param {HTMLElement} totalEl
- * @param {object[]} products
- */
-export function renderCart(bodyEl, footerEl, totalEl, products) {
-  const { items, total } = getCartDetails(products);
-
-  if (items.length === 0) {
-    bodyEl.innerHTML = `
-      <div class="cart-drawer__empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z"/>
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <path d="M16 10a4 4 0 01-8 0"/>
-        </svg>
-        <p>Tu carrito está vacío</p>
-      </div>
-    `;
+  if (cart.length === 0) {
+    bodyEl.innerHTML = '<p class="cart-empty-msg">Tu carrito está vacío.</p>';
     footerEl.hidden = true;
     return;
   }
-
   footerEl.hidden = false;
+  const total = cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   totalEl.textContent = formatPrice(total);
 
-  const placeholder = 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72"><rect fill="#f0f0f0" width="72" height="72"/></svg>'
-  );
+  bodyEl.innerHTML = cart.map(item => {
+    const details = [
+      item.tipo === 'bulto' ? `Bulto (${item.descBulto})` : 'Unidad',
+      item.color ? `Color: ${item.color}` : '',
+      item.talle ? `Talle: ${item.talle}` : ''
+    ].filter(Boolean).join(' | ');
 
-  bodyEl.innerHTML = items.map((item) => `
-    <div class="cart-item" data-id="${item.id}">
-      <img
-        class="cart-item__image"
-        src="${item.imagen || placeholder}"
-        alt="${escapeHtml(item.nombre)}"
-        onerror="this.src='${placeholder}'"
-      >
+    return `
+    <div class="cart-item">
+      <img class="cart-item__image" src="${item.imagen}" alt="${escapeHtml(item.nombre)}">
       <div class="cart-item__info">
         <span class="cart-item__name">${escapeHtml(item.nombre)}</span>
+        <span style="font-size: 11px; color: #666; display: block; margin-bottom: 4px;">${escapeHtml(details)}</span>
         <span class="cart-item__price">${formatPrice(item.precio)} c/u</span>
         <div class="cart-item__controls">
           <div class="cart-item__qty">
-            <button class="cart-item__qty-btn qty-minus" data-id="${item.id}" aria-label="Disminuir cantidad">−</button>
+            <button class="cart-item__qty-btn qty-minus" data-vid="${item.variantId}">−</button>
             <span class="cart-item__qty-value">${item.cantidad}</span>
-            <button class="cart-item__qty-btn qty-plus" data-id="${item.id}" aria-label="Aumentar cantidad">+</button>
+            <button class="cart-item__qty-btn qty-plus" data-vid="${item.variantId}">+</button>
           </div>
-          <span class="cart-item__subtotal">${formatPrice(item.subtotal)}</span>
+          <span class="cart-item__subtotal">${formatPrice(item.precio * item.cantidad)}</span>
         </div>
-        <button class="cart-item__remove remove-item" data-id="${item.id}">Eliminar</button>
+        <button class="cart-item__remove remove-item" data-vid="${item.variantId}">Eliminar</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-/**
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+export function sendWhatsAppOrder() {
+  if (cart.length === 0) return;
+  const total = cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
+  let msg = '¡Hola! Quiero hacer el siguiente pedido:\n\n';
+  cart.forEach(i => {
+    msg += `- ${i.cantidad}x ${i.nombre}\n`;
+    msg += `  Tipo: ${i.tipo === 'bulto' ? `Bulto (${i.descBulto})` : 'Unidad'}\n`;
+    if (i.color) msg += `  Color: ${i.color}\n`;
+    if (i.talle) msg += `  Talle: ${i.talle}\n`;
+    msg += `  Subtotal: ${formatPrice(i.precio * i.cantidad)}\n\n`;
+  });
+  msg += `*Total: ${formatPrice(total)}*`;
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
 }
