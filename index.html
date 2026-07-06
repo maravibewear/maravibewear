@@ -6,11 +6,15 @@
   <title>Maravibewear | Tienda Online</title>
   
   <link rel="icon" type="image/png" href="" id="favicon">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <div class="cart-overlay" id="cartOverlay" aria-hidden="true"></div>
-
   <div class="cart-sidebar" id="cartSidebar" aria-hidden="true">
     <div class="cart-sidebar__header">
       <h2>Tu Carrito</h2>
@@ -43,6 +47,9 @@
 
   <main class="main">
     <section id="productos" class="container">
+      
+      <div class="category-filters" id="categoryFilters" hidden></div>
+
       <div id="loadingState" class="state loading-container">
         <div class="spinner"></div>
         <p>Cargando productos...</p>
@@ -98,9 +105,21 @@
 
   <footer class="footer" id="contacto">
     <div class="container footer__inner">
-      <div>
+      <div class="footer__brand">
         <img src="" alt="Maravibewear" class="footer-logo-img brand-logo">
         <p class="footer__tagline">Lencería y comodidad para tu día a día.</p>
+      </div>
+      
+      <div class="footer__socials">
+        <h4 style="margin-bottom: 12px; font-weight: 500;">Contactanos</h4>
+        <a href="https://wa.me/5491157089345" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.146.552 4.195 1.604 6.03L.113 24l6.105-1.579A11.96 11.96 0 0012.031 24c6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm0 21.993a9.927 9.927 0 01-5.06-1.378l-.363-.214-3.766.974.992-3.666-.235-.374A9.922 9.922 0 012.038 12.03c0-5.509 4.484-9.993 9.993-9.993s9.993 4.484 9.993 9.993-4.484 9.993-9.993 9.993zm5.492-7.513c-.301-.151-1.782-.88-2.059-.98-.277-.101-.479-.151-.681.151-.202.302-.781.98-.957 1.182-.176.202-.353.227-.655.076-1.727-.864-2.888-1.467-4.004-3.398-.176-.302.176-.28.475-.873.076-.151.038-.283-.019-.383-.057-.101-.681-1.638-.934-2.242-.246-.588-.496-.508-.681-.518-.176-.009-.377-.009-.578-.009-.202 0-.529.076-.806.378-.277.302-1.058 1.033-1.058 2.518 0 1.485 1.083 2.92 1.234 3.121.151.202 2.129 3.249 5.158 4.557 2.053.886 2.808.956 3.864.795 1.2-.182 2.373-.895 2.705-1.761.332-.866.332-1.609.232-1.761-.101-.152-.378-.242-.681-.393z"/></svg>
+          WhatsApp
+        </a>
+        <a href="https://instagram.com/tu_usuario_aqui" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          Instagram
+        </a>
       </div>
     </div>
     <div class="footer__bottom container">
