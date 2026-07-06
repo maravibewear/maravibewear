@@ -1,17 +1,27 @@
 import { fetchProducts } from './api.js';
 
-// 🚨 VARIABLE ÚNICA PARA EL LOGO (Pega aquí el enlace de Drive de tu logo) 🚨
+// VARIABLE ÚNICA PARA LOGO Y PESTAÑA DE NAVEGADOR
 const LINK_DEL_LOGO = 'https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000';
 
 const loadingState = document.getElementById('loadingState');
 const errorState = document.getElementById('errorState');
 const productsGrid = document.getElementById('productsGrid');
 
-// Aplica el logo a todos los lugares donde corresponda
+// Aplica el logo a la Pestaña (Favicon), Header y Footer
 function aplicarLogo() {
+  // 1. Pestaña del navegador
+  const favicon = document.getElementById('favicon');
+  if (favicon) {
+    favicon.href = LINK_DEL_LOGO;
+  }
+
+  // 2. Imágenes dentro de la página (Header y Footer)
   const logos = document.querySelectorAll('.brand-logo');
   logos.forEach(img => {
     img.src = LINK_DEL_LOGO;
+    // Evitar que la imagen rota se vea antes de cargar
+    img.onerror = () => { img.style.display = 'none'; };
+    img.onload = () => { img.style.display = 'block'; };
   });
 }
 
@@ -35,7 +45,7 @@ function renderProducts(products) {
       </div>
       <div class="product-card__body">
         <h3 class="product-card__name">${product.nombre}</h3>
-        <p class="product-card__price">$${product.precioUnidad}</p>
+        <p class="product-card__price">$${product.precioUnidad > 0 ? product.precioUnidad : product.precioBulto}</p>
       </div>
     `;
 
@@ -85,9 +95,11 @@ function openModal(product) {
   }
   if (product.precioBulto > 0) {
     const desc = product.descBulto || 'Bulto';
+    // Si no hay precio por unidad, marcamos el bulto por defecto
+    const isChecked = (product.precioUnidad <= 0) ? 'checked' : '';
     modalPrices.innerHTML += `
       <label>
-        <input type="radio" name="tipoCompra" value="bulto">
+        <input type="radio" name="tipoCompra" value="bulto" ${isChecked}>
         ${desc} - $${product.precioBulto}
       </label>
     `;
@@ -130,7 +142,7 @@ function openModal(product) {
   
   newBtnAddToCart.onclick = () => {
     const radioSeleccionado = document.querySelector('input[name="tipoCompra"]:checked');
-    if (!radioSeleccionado) return; // Por si no hay precio cargado
+    if (!radioSeleccionado) return; 
 
     const tipoCompra = radioSeleccionado.value;
     const precioSeleccionado = tipoCompra === 'unidad' ? product.precioUnidad : product.precioBulto;
@@ -186,7 +198,9 @@ async function init() {
   
   try {
     const products = await fetchProducts();
-    if (!products || products.length === 0) throw new Error("No hay productos");
+    if (!products || products.length === 0) {
+      throw new Error("El Google Script devolvió una lista vacía. Verificá las columnas de tu Excel.");
+    }
 
     loadingState.style.display = 'none';
     productsGrid.hidden = false;
@@ -195,7 +209,7 @@ async function init() {
   } catch (error) {
     loadingState.style.display = 'none';
     errorState.hidden = false;
-    console.error("Error al inicializar:", error);
+    console.error("Error crítico al inicializar:", error);
   }
 }
 
