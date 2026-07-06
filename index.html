@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Maravibewear — Catálogo online">
   <title>Maravibewear | Tienda Online</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -15,20 +11,18 @@
   <!-- Overlay del carrito -->
   <div class="cart-overlay" id="cartOverlay" aria-hidden="true"></div>
 
-  <!-- Header Original -->
+  <!-- Header -->
   <header class="header">
     <div class="header__inner container">
-      <a href="#" class="header__logo" aria-label="Maravibewear — Inicio">
-        <!-- Reemplaza TU_ID_AQUI por el ID de Google Drive de tu logo, o usa image_a5281a.png -->
-        <img src="https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000" alt="Maravibewear" class="header__logo-img">
+      <a href="#" class="header__logo">
+        <!-- Queda vacío, lo llenamos con JS -->
+        <img src="" alt="Maravibewear" class="brand-logo header__logo-img">
       </a>
-
-      <nav class="header__nav" aria-label="Navegación principal">
+      <nav class="header__nav">
         <a href="#productos" class="header__nav-link">Productos</a>
         <a href="#contacto" class="header__nav-link">Contacto</a>
       </nav>
-
-      <button class="cart-toggle" id="cartToggle" aria-label="Abrir carrito">
+      <button class="cart-toggle" id="cartToggle">
         Carrito (<span id="cartBadge">0</span>)
       </button>
     </div>
@@ -37,35 +31,26 @@
   <!-- Contenido principal -->
   <main class="main">
     <section id="productos" class="container">
-      
-      <!-- Contenedor de Carga con Animación Original -->
+      <!-- Carga -->
       <div id="loadingState" class="state loading-container">
         <div class="spinner"></div>
         <p>Cargando productos...</p>
       </div>
-
-      <!-- Contenedor de Error -->
+      <!-- Error -->
       <div id="errorState" class="state" hidden>
-        <p>Error al cargar.</p>
+        <p>Error al cargar. Verifica tu conexión o la URL del script.</p>
         <button onclick="location.reload()" class="btn btn--secondary">Reintentar</button>
       </div>
 
-      <!-- Filtros (Opcional) -->
-      <div id="filtersSection" hidden>
-        <div id="categoryFilters" class="filters"></div>
-      </div>
-
-      <!-- Grilla de Productos -->
+      <!-- Grilla -->
       <div id="productsGrid" class="products-grid" hidden></div>
-      <div id="emptyState" class="state" hidden>No hay productos disponibles en esta categoría.</div>
-
     </section>
   </main>
 
-  <!-- Modal de Producto -->
+  <!-- Modal -->
   <div class="modal-overlay" id="productModal" hidden>
     <div class="modal-content">
-      <button class="modal-close" id="closeModal" aria-label="Cerrar">&times;</button>
+      <button class="modal-close" id="closeModal">&times;</button>
       <div class="modal-body">
         <div class="modal-gallery">
           <img id="modalMainImg" src="" alt="Producto" class="modal-main-img">
@@ -103,27 +88,20 @@
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- Footer con Imagen Restaurado -->
   <footer class="footer">
-      <div class="container footer__inner">
-        <div>
-          <h2 class="footer__logo" style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase;">MARAVIBEWEAR</h2>
-          <p class="footer__tagline">Lencería y comodidad para tu día a día.</p>
-        </div>
-        <div>
-          <h4 class="footer__heading" style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 16px;">Enlaces</h4>
-          <ul class="footer__list" style="list-style: none; padding: 0;">
-            <li style="margin-bottom: 8px;"><a href="#productos" style="color: rgba(255,255,255,0.7); text-decoration: none;">Productos</a></li>
-            <li><a href="#contacto" style="color: rgba(255,255,255,0.7); text-decoration: none;">Contacto</a></li>
-          </ul>
-        </div>
+    <div class="container footer__inner">
+      <div>
+        <!-- Queda vacío, lo llenamos con JS -->
+        <img src="" alt="Maravibewear" class="brand-logo footer__logo-img">
+        <p class="footer__tagline">Lencería y comodidad para tu día a día.</p>
       </div>
-      <div class="footer__bottom container">
-        <p>&copy; 2026 Maravibewear. Todos los derechos reservados.</p>
-      </div>
+    </div>
+    <div class="footer__bottom container">
+      <p>&copy; 2026 Maravibewear. Todos los derechos reservados.</p>
+    </div>
   </footer>
 
-  <!-- Scripts -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
