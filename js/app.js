@@ -1,14 +1,15 @@
 import { fetchProducts } from './api.js';
 import { addToCart, renderCart, updateQuantity, removeFromCart, sendWhatsAppOrder, getCart } from './cart.js';
 
-// VARIABLE ÚNICA PARA LOGO Y PESTAÑA DE NAVEGADOR
 const LINK_DEL_LOGO = 'https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000';
 
 const loadingState = document.getElementById('loadingState');
 const errorState = document.getElementById('errorState');
 const productsGrid = document.getElementById('productsGrid');
+const categoryFilters = document.getElementById('categoryFilters');
 
-// Aplica el logo a la Pestaña (Favicon), Header y Footer
+let allProducts = []; // Guardamos los productos para el filtro
+
 function aplicarLogo() {
   const favicon = document.getElementById('favicon');
   if (favicon) favicon.href = LINK_DEL_LOGO;
@@ -21,7 +22,6 @@ function aplicarLogo() {
   });
 }
 
-// Función centralizada para actualizar la interfaz del carrito
 function updateCartUI() {
   const bodyEl = document.getElementById('cartBody');
   const footerEl = document.getElementById('cartFooter');
@@ -33,8 +33,41 @@ function updateCartUI() {
   }
 }
 
+// NUEVO: Renderiza los botones de categorías
+function renderCategoryFilters(products) {
+  if (!categoryFilters) return;
+  const categories = ['Todas', ...new Set(products.map(p => p.categoria).filter(Boolean))];
+  
+  if (categories.length <= 2) { // Si solo hay "Todas" y 1 categoría, ocultar
+    categoryFilters.hidden = true;
+    return;
+  }
+  
+  categoryFilters.hidden = false;
+  categoryFilters.innerHTML = categories.map(cat => 
+    `<button class="filter-btn ${cat === 'Todas' ? 'active' : ''}" data-cat="${cat}">${cat}</button>`
+  ).join('');
+
+  categoryFilters.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Remover clase active de todos y dar al clickeado
+      categoryFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      // Filtrar y renderizar
+      const cat = e.target.dataset.cat;
+      const filtered = cat === 'Todas' ? products : products.filter(p => p.categoria === cat);
+      renderProducts(filtered);
+    });
+  });
+}
+
 function renderProducts(products) {
   productsGrid.innerHTML = '';
+  if (products.length === 0) {
+    productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No hay productos en esta categoría.</p>';
+    return;
+  }
   
   products.forEach(product => {
     const card = document.createElement('article');
@@ -65,14 +98,11 @@ function openModal(product) {
 
   const modalThumbs = document.getElementById('modalThumbs');
   modalThumbs.innerHTML = ''; 
-  
   if (product.imagenes.length > 1) {
     product.imagenes.forEach((imgUrl, index) => {
       const thumb = document.createElement('img');
       thumb.src = imgUrl;
-      thumb.alt = `Miniatura ${index + 1}`;
       if (index === 0) thumb.classList.add('active');
-      
       thumb.addEventListener('click', () => {
         modalMainImg.src = imgUrl;
         modalThumbs.querySelectorAll('img').forEach(img => img.classList.remove('active'));
@@ -84,7 +114,6 @@ function openModal(product) {
 
   const modalPrices = document.getElementById('modalPrices');
   modalPrices.innerHTML = ''; 
-  
   if (product.precioUnidad > 0) {
     modalPrices.innerHTML += `
       <label>
@@ -104,9 +133,17 @@ function openModal(product) {
     `;
   }
 
+  // Lógica Correlativa Color/Talle
   const colorGroup = document.getElementById('colorGroup');
   const colorSelect = document.getElementById('modalColor');
+  const sizeGroup = document.getElementById('sizeGroup');
+  const sizeSelect = document.getElementById('modalSize');
+  
   colorSelect.innerHTML = ''; 
+  sizeSelect.innerHTML = '';
+
+  const hasVariantes = Object.keys(product.variantes || {}).length > 0;
+
   if (product.colores && product.colores.length > 0) {
     colorGroup.hidden = false;
     product.colores.forEach(color => {
@@ -114,26 +151,41 @@ function openModal(product) {
     });
   } else { colorGroup.hidden = true; }
 
-  const sizeGroup = document.getElementById('sizeGroup');
-  const sizeSelect = document.getElementById('modalSize');
-  sizeSelect.innerHTML = ''; 
+  // Función que actualiza talles según el color elegido
+  const updateSizes = () => {
+    sizeSelect.innerHTML = '';
+    let availableSizes = product.talles;
+    
+    if (hasVariantes) {
+      const selectedColor = colorSelect.value;
+      availableSizes = product.variantes[selectedColor] || [];
+    }
+
+    if (availableSizes && availableSizes.length > 0) {
+      sizeGroup.hidden = false;
+      availableSizes.forEach(talle => {
+        sizeSelect.innerHTML += `<option value="${talle}">${talle}</option>`;
+      });
+    } else {
+      sizeGroup.hidden = true;
+    }
+  };
+
   if (product.talles && product.talles.length > 0) {
-    sizeGroup.hidden = false;
-    product.talles.forEach(talle => {
-      sizeSelect.innerHTML += `<option value="${talle}">${talle}</option>`;
-    });
-  } else { sizeGroup.hidden = true; }
+    if (hasVariantes) {
+      // Si cambia el color, actualizamos los talles
+      colorSelect.addEventListener('change', updateSizes);
+    }
+    updateSizes(); // Render inicial
+  } else {
+    sizeGroup.hidden = true;
+  }
 
   let qty = 1;
   const qtyVal = document.getElementById('modalQtyVal');
   qtyVal.textContent = qty;
-
-  document.getElementById('modalQtyMinus').onclick = () => {
-    if (qty > 1) { qty--; qtyVal.textContent = qty; }
-  };
-  document.getElementById('modalQtyPlus').onclick = () => {
-    qty++; qtyVal.textContent = qty;
-  };
+  document.getElementById('modalQtyMinus').onclick = () => { if (qty > 1) { qty--; qtyVal.textContent = qty; } };
+  document.getElementById('modalQtyPlus').onclick = () => { qty++; qtyVal.textContent = qty; };
 
   const btnAddToCart = document.getElementById('modalAddToCart');
   const newBtnAddToCart = btnAddToCart.cloneNode(true);
@@ -143,21 +195,15 @@ function openModal(product) {
     const radioSeleccionado = document.querySelector('input[name="tipoCompra"]:checked');
     if (!radioSeleccionado) return; 
 
-    const tipoCompra = radioSeleccionado.value;
-    const precioSeleccionado = tipoCompra === 'unidad' ? product.precioUnidad : product.precioBulto;
-    const colorSeleccionado = colorGroup.hidden ? '' : colorSelect.value;
-    const talleSeleccionado = sizeGroup.hidden ? '' : sizeSelect.value;
-    
-    // Usamos el cart.js para añadir el producto (código limpio)
     const options = {
-      tipo: tipoCompra,
-      precio: precioSeleccionado,
-      color: colorSeleccionado,
-      talle: talleSeleccionado
+      tipo: radioSeleccionado.value,
+      precio: radioSeleccionado.value === 'unidad' ? product.precioUnidad : product.precioBulto,
+      color: colorGroup.hidden ? '' : colorSelect.value,
+      talle: sizeGroup.hidden ? '' : sizeSelect.value
     };
 
     addToCart(product, qty, options);
-    updateCartUI(); // Actualizar visualmente el carrito y la insignia
+    updateCartUI(); 
 
     const textoOriginal = newBtnAddToCart.textContent;
     newBtnAddToCart.textContent = '¡Agregado!';
@@ -178,16 +224,14 @@ function openModal(product) {
 
 async function init() {
   aplicarLogo(); 
-  updateCartUI(); // Render inicial
+  updateCartUI(); 
   
-  // Elementos del carrito
   const cartToggle = document.getElementById('cartToggle');
   const cartOverlay = document.getElementById('cartOverlay');
   const cartSidebar = document.getElementById('cartSidebar');
   const closeCart = document.getElementById('closeCart');
   const btnCheckout = document.getElementById('btnCheckout');
   
-  // Lógica para abrir/cerrar carrito
   const openCartHandler = () => {
     if (cartOverlay) cartOverlay.classList.add('active');
     if (cartSidebar) cartSidebar.classList.add('active');
@@ -200,27 +244,22 @@ async function init() {
   if (cartToggle) cartToggle.addEventListener('click', openCartHandler);
   if (closeCart) closeCart.addEventListener('click', closeCartHandler);
   if (cartOverlay) cartOverlay.addEventListener('click', closeCartHandler);
-
-  // Envío a WhatsApp
-  if (btnCheckout) {
-    btnCheckout.addEventListener('click', sendWhatsAppOrder);
-  }
+  if (btnCheckout) btnCheckout.addEventListener('click', sendWhatsAppOrder);
   
-  // Fetch a Google Sheets
   try {
-    const products = await fetchProducts();
-    if (!products || products.length === 0) {
-      throw new Error("El Google Script devolvió una lista vacía.");
-    }
+    allProducts = await fetchProducts();
+    if (!allProducts || allProducts.length === 0) throw new Error("Lista vacía");
 
     loadingState.style.display = 'none';
     productsGrid.hidden = false;
-    renderProducts(products);
+    
+    renderCategoryFilters(allProducts); // Renderizamos filtros
+    renderProducts(allProducts); // Renderizamos todo
 
   } catch (error) {
     loadingState.style.display = 'none';
     errorState.hidden = false;
-    console.error("Error crítico al inicializar:", error);
+    console.error("Error crítico:", error);
   }
 }
 
