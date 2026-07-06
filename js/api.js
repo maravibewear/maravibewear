@@ -2,7 +2,6 @@
  * api.js — Comunicación con Google Apps Script (Google Sheets)
  */
 
-/** @type {string} URL del endpoint JSON de Google Apps Script */
 export const API_URL = 'https://script.google.com/macros/s/AKfycbyMIxQSkPgixtqnaeezNo-99H-K_aSdAmbCMCpj1Ng7nULiJX0cgZvBvsPE8Am7czLI/exec'; // <-- PEGA TU NUEVA URL ACA
 
 export function normalizeImageUrl(url) {
@@ -17,13 +16,39 @@ export function normalizeImageUrl(url) {
 
 export function normalizeProduct(raw) {
   if (!raw) return null;
-  // Extraemos datos asegurándonos de que no falle si la columna no existe
   const id = String(raw.id ?? raw.ID ?? '').trim();
   const nombre = String(raw.nombre ?? raw.Nombre ?? raw.name ?? '').trim();
   if (!id) return null;
 
   const imagenes = String(raw.imagen ?? raw.Imagen ?? '').split(',').map(u => normalizeImageUrl(u.trim())).filter(Boolean);
   
+  // Procesamiento de Colores y Talles correlativos
+  const colorStr = String(raw.color ?? raw.Color ?? '').trim();
+  const tallesStr = String(raw.talles ?? raw.Talles ?? '').trim();
+  
+  let colores = colorStr.split(',').map(c => c.trim()).filter(Boolean);
+  let talles = [];
+  let variantes = {}; // Guardará la relación "BLANCO" -> ["S", "M"]
+
+  if (tallesStr.includes(':')) {
+    // Formato detectado: BLANCO: S, M | NEGRO: M
+    tallesStr.split('|').forEach(grupo => {
+      const partes = grupo.split(':');
+      if (partes.length === 2) {
+        const colorName = partes[0].trim();
+        const sizes = partes[1].split(',').map(x => x.trim()).filter(Boolean);
+        variantes[colorName] = sizes;
+        
+        // Agregamos a listas generales si no estaban
+        sizes.forEach(s => { if (!talles.includes(s)) talles.push(s); });
+        if (!colores.includes(colorName)) colores.push(colorName);
+      }
+    });
+  } else {
+    // Formato simple clásico
+    talles = tallesStr.split(',').map(t => t.trim()).filter(Boolean);
+  }
+
   return {
     id: id,
     nombre: nombre,
@@ -31,8 +56,9 @@ export function normalizeProduct(raw) {
     imagenes: imagenes.length > 0 ? imagenes : [''],
     categoria: String(raw.categoria ?? raw.Categoria ?? 'General').trim(),
     enStock: String(raw.stock ?? raw.Stock ?? 'si').toLowerCase() !== 'no',
-    colores: String(raw.color ?? raw.Color ?? '').split(',').map(c => c.trim()).filter(Boolean),
-    talles: String(raw.talles ?? raw.Talles ?? '').split(',').map(t => t.trim()).filter(Boolean),
+    colores: colores,
+    talles: talles,
+    variantes: variantes, // Pasamos las variantes a la app
     precioUnidad: parseFloat(raw.precio_unidad ?? raw.preciounidad ?? raw.precio ?? 0) || 0,
     precioBulto: parseFloat(raw.precio_bulto ?? raw.preciobulto ?? 0) || 0,
     descBulto: String(raw.desc_bulto ?? raw.descbulto ?? 'Bulto').trim()
