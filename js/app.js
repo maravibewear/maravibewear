@@ -1,4 +1,5 @@
 import { fetchProducts } from './api.js';
+import { addToCart, renderCart, updateQuantity, removeFromCart, sendWhatsAppOrder, getCart } from './cart.js';
 
 // VARIABLE ÚNICA PARA LOGO Y PESTAÑA DE NAVEGADOR
 const LINK_DEL_LOGO = 'https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000';
@@ -9,49 +10,27 @@ const productsGrid = document.getElementById('productsGrid');
 
 // Aplica el logo a la Pestaña (Favicon), Header y Footer
 function aplicarLogo() {
-  // 1. Pestaña del navegador
   const favicon = document.getElementById('favicon');
-  if (favicon) {
-    favicon.href = LINK_DEL_LOGO;
-  }
+  if (favicon) favicon.href = LINK_DEL_LOGO;
 
-  // 2. Imágenes dentro de la página (Header y Footer)
   const logos = document.querySelectorAll('.brand-logo');
   logos.forEach(img => {
     img.src = LINK_DEL_LOGO;
-    // Evitar que la imagen rota se vea antes de cargar
     img.onerror = () => { img.style.display = 'none'; };
     img.onload = () => { img.style.display = 'block'; };
   });
 }
 
-function updateCartBadge() {
-  const badge = document.getElementById('cartBadge');
-  if (!badge) return;
-
-  // Intentamos obtener el carrito
-  const data = localStorage.getItem('maravibewear_cart');
-  let carrito = [];
-
-  try {
-    // Si hay datos, intentamos convertirlos
-    if (data) {
-      carrito = JSON.parse(data);
-      // Validamos que sea realmente un array
-      if (!Array.isArray(carrito)) {
-        carrito = [];
-        localStorage.removeItem('maravibewear_cart'); // Borramos lo corrupto
-      }
-    }
-  } catch (e) {
-    // Si hubo error al parsear, limpiamos
-    carrito = [];
-    localStorage.removeItem('maravibewear_cart');
+// Función centralizada para actualizar la interfaz del carrito
+function updateCartUI() {
+  const bodyEl = document.getElementById('cartBody');
+  const footerEl = document.getElementById('cartFooter');
+  const totalEl = document.getElementById('cartTotal');
+  const badgeEl = document.getElementById('cartBadge');
+  
+  if (bodyEl && footerEl && totalEl && badgeEl) {
+    renderCart(bodyEl, footerEl, totalEl, badgeEl);
   }
-
-  // Ahora sí, hacemos el reduce de forma segura
-  const total = carrito.reduce((acc, item) => acc + (item.cantidad || 0), 0);
-  badge.textContent = total;
 }
 
 function renderProducts(products) {
@@ -116,7 +95,6 @@ function openModal(product) {
   }
   if (product.precioBulto > 0) {
     const desc = product.descBulto || 'Bulto';
-    // Si no hay precio por unidad, marcamos el bulto por defecto
     const isChecked = (product.precioUnidad <= 0) ? 'checked' : '';
     modalPrices.innerHTML += `
       <label>
@@ -167,34 +145,19 @@ function openModal(product) {
 
     const tipoCompra = radioSeleccionado.value;
     const precioSeleccionado = tipoCompra === 'unidad' ? product.precioUnidad : product.precioBulto;
-    const nombreFinal = product.nombre + (tipoCompra === 'bulto' ? ` (${product.descBulto || 'Bulto'})` : '');
     const colorSeleccionado = colorGroup.hidden ? '' : colorSelect.value;
     const talleSeleccionado = sizeGroup.hidden ? '' : sizeSelect.value;
     
-    const idUnico = `${product.id}-${tipoCompra}-${colorSeleccionado}-${talleSeleccionado}`;
-
-    const itemCart = {
-      idUnico: idUnico,
-      idProducto: product.id,
-      nombre: nombreFinal,
+    // Usamos el cart.js para añadir el producto (código limpio)
+    const options = {
+      tipo: tipoCompra,
       precio: precioSeleccionado,
-      imagen: product.imagenes[0],
       color: colorSeleccionado,
-      talle: talleSeleccionado,
-      cantidad: qty
+      talle: talleSeleccionado
     };
 
-    let carrito = JSON.parse(localStorage.getItem('maravibewear_cart')) || [];
-    const index = carrito.findIndex(i => i.idUnico === itemCart.idUnico);
-    
-    if (index !== -1) {
-      carrito[index].cantidad += qty; 
-    } else {
-      carrito.push(itemCart); 
-    }
-    
-    localStorage.setItem('maravibewear_cart', JSON.stringify(carrito));
-    updateCartBadge();
+    addToCart(product, qty, options);
+    updateCartUI(); // Actualizar visualmente el carrito y la insignia
 
     const textoOriginal = newBtnAddToCart.textContent;
     newBtnAddToCart.textContent = '¡Agregado!';
@@ -215,26 +178,56 @@ function openModal(product) {
 
 async function init() {
   aplicarLogo(); 
-  updateCartBadge(); 
+  updateCartUI(); // Render inicial
   
-  // NUEVO: Agregar escuchador para el carrito aquí mismo
+  // Elementos del carrito
   const cartToggle = document.getElementById('cartToggle');
   const cartOverlay = document.getElementById('cartOverlay');
-  
-  if (cartToggle && cartOverlay) {
-    cartToggle.addEventListener('click', () => {
-      cartOverlay.classList.add('active'); // O la clase que use tu CSS para mostrarlo
-    });
-  }
-  
-  // (Opcional) Si tienes un botón para cerrar el carrito
+  const cartSidebar = document.getElementById('cartSidebar');
   const closeCart = document.getElementById('closeCart');
-  if (closeCart) {
-    closeCart.addEventListener('click', () => {
-      cartOverlay.classList.remove('active');
+  const cartBody = document.getElementById('cartBody');
+  const btnCheckout = document.getElementById('btnCheckout');
+  
+  // Lógica para abrir/cerrar carrito
+  const openCartHandler = () => {
+    if (cartOverlay) cartOverlay.classList.add('active');
+    if (cartSidebar) cartSidebar.classList.add('active');
+  };
+  const closeCartHandler = () => {
+    if (cartOverlay) cartOverlay.classList.remove('active');
+    if (cartSidebar) cartSidebar.classList.remove('active');
+  };
+
+  if (cartToggle) cartToggle.addEventListener('click', openCartHandler);
+  if (closeCart) closeCart.addEventListener('click', closeCartHandler);
+  if (cartOverlay) cartOverlay.addEventListener('click', closeCartHandler);
+  
+  // Lógica para botones de +, - y Eliminar dentro del carrito
+  if (cartBody) {
+    cartBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const vid = btn.dataset.vid;
+      
+      if (btn.classList.contains('qty-plus')) {
+        const item = getCart().find(i => i.variantId === vid);
+        if (item) updateQuantity(vid, item.cantidad + 1);
+      } else if (btn.classList.contains('qty-minus')) {
+        const item = getCart().find(i => i.variantId === vid);
+        if (item) updateQuantity(vid, item.cantidad - 1);
+      } else if (btn.classList.contains('remove-item')) {
+        removeFromCart(vid);
+      }
+      updateCartUI(); // Volvemos a pintar tras cada cambio
     });
   }
+
+  // Envío a WhatsApp
+  if (btnCheckout) {
+    btnCheckout.addEventListener('click', sendWhatsAppOrder);
+  }
   
+  // Fetch a Google Sheets
   try {
     const products = await fetchProducts();
     if (!products || products.length === 0) {
