@@ -1,10 +1,20 @@
 import { fetchProducts } from './api.js';
 
+// 🚨 VARIABLE ÚNICA PARA EL LOGO (Pega aquí el enlace de Drive de tu logo) 🚨
+const LINK_DEL_LOGO = 'https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000';
+
 const loadingState = document.getElementById('loadingState');
 const errorState = document.getElementById('errorState');
 const productsGrid = document.getElementById('productsGrid');
 
-// Función para actualizar el número del carrito al cargar la página
+// Aplica el logo a todos los lugares donde corresponda
+function aplicarLogo() {
+  const logos = document.querySelectorAll('.brand-logo');
+  logos.forEach(img => {
+    img.src = LINK_DEL_LOGO;
+  });
+}
+
 function updateCartBadge() {
   const badge = document.getElementById('cartBadge');
   if (!badge) return;
@@ -13,7 +23,6 @@ function updateCartBadge() {
   badge.textContent = total;
 }
 
-// Función básica para inyectar las tarjetas en el HTML
 function renderProducts(products) {
   productsGrid.innerHTML = '';
   
@@ -35,18 +44,15 @@ function renderProducts(products) {
   });
 }
 
-// Lógica completa del Modal
 function openModal(product) {
   const modal = document.getElementById('productModal');
   
-  // 1. Textos e imagen principal
   document.getElementById('modalTitle').textContent = product.nombre;
   document.getElementById('modalDesc').textContent = product.descripcion || '';
   
   const modalMainImg = document.getElementById('modalMainImg');
   modalMainImg.src = product.imagenes[0] || ''; 
 
-  // Galería de miniaturas
   const modalThumbs = document.getElementById('modalThumbs');
   modalThumbs.innerHTML = ''; 
   
@@ -66,7 +72,6 @@ function openModal(product) {
     });
   }
 
-  // 2. Precios
   const modalPrices = document.getElementById('modalPrices');
   modalPrices.innerHTML = ''; 
   
@@ -88,7 +93,6 @@ function openModal(product) {
     `;
   }
 
-  // 3 y 4. Color y Talle
   const colorGroup = document.getElementById('colorGroup');
   const colorSelect = document.getElementById('modalColor');
   colorSelect.innerHTML = ''; 
@@ -109,7 +113,6 @@ function openModal(product) {
     });
   } else { sizeGroup.hidden = true; }
 
-  // 5. Selector de Cantidad
   let qty = 1;
   const qtyVal = document.getElementById('modalQtyVal');
   qtyVal.textContent = qty;
@@ -121,21 +124,20 @@ function openModal(product) {
     qty++; qtyVal.textContent = qty;
   };
 
-  // 6. LÓGICA DE AGREGAR AL CARRITO (¡NUEVO!)
   const btnAddToCart = document.getElementById('modalAddToCart');
-  
-  // Clonamos el botón para limpiar eventos click anteriores (evita que se agreguen duplicados por error)
   const newBtnAddToCart = btnAddToCart.cloneNode(true);
   btnAddToCart.parentNode.replaceChild(newBtnAddToCart, btnAddToCart);
   
   newBtnAddToCart.onclick = () => {
-    const tipoCompra = document.querySelector('input[name="tipoCompra"]:checked').value;
+    const radioSeleccionado = document.querySelector('input[name="tipoCompra"]:checked');
+    if (!radioSeleccionado) return; // Por si no hay precio cargado
+
+    const tipoCompra = radioSeleccionado.value;
     const precioSeleccionado = tipoCompra === 'unidad' ? product.precioUnidad : product.precioBulto;
     const nombreFinal = product.nombre + (tipoCompra === 'bulto' ? ` (${product.descBulto || 'Bulto'})` : '');
     const colorSeleccionado = colorGroup.hidden ? '' : colorSelect.value;
     const talleSeleccionado = sizeGroup.hidden ? '' : sizeSelect.value;
     
-    // Generar ID único para que no se pise la misma prenda en distinto talle o tipo
     const idUnico = `${product.id}-${tipoCompra}-${colorSeleccionado}-${talleSeleccionado}`;
 
     const itemCart = {
@@ -149,20 +151,18 @@ function openModal(product) {
       cantidad: qty
     };
 
-    // Guardar en localStorage
     let carrito = JSON.parse(localStorage.getItem('maravibewear_cart')) || [];
     const index = carrito.findIndex(i => i.idUnico === itemCart.idUnico);
     
     if (index !== -1) {
-      carrito[index].cantidad += qty; // Si ya existe, suma la cantidad
+      carrito[index].cantidad += qty; 
     } else {
-      carrito.push(itemCart); // Si no existe, lo agrega
+      carrito.push(itemCart); 
     }
     
     localStorage.setItem('maravibewear_cart', JSON.stringify(carrito));
-    updateCartBadge(); // Actualiza el globito rojo
+    updateCartBadge();
 
-    // Feedback visual en el botón
     const textoOriginal = newBtnAddToCart.textContent;
     newBtnAddToCart.textContent = '¡Agregado!';
     newBtnAddToCart.style.backgroundColor = 'var(--color-success)'; 
@@ -172,17 +172,17 @@ function openModal(product) {
       newBtnAddToCart.textContent = textoOriginal;
       newBtnAddToCart.style.backgroundColor = ''; 
       newBtnAddToCart.style.color = '';
-      modal.hidden = true; // Cierra el modal automáticamente después de agregar
+      modal.hidden = true; 
     }, 1200);
   };
 
-  // Mostrar y Cerrar Modal
   modal.hidden = false;
   document.getElementById('closeModal').onclick = () => { modal.hidden = true; };
 }
 
 async function init() {
-  updateCartBadge(); // Lee el carrito apenas entras a la página
+  aplicarLogo(); 
+  updateCartBadge(); 
   
   try {
     const products = await fetchProducts();
