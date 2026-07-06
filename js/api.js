@@ -4,7 +4,6 @@
 
 /** @type {string} URL del endpoint JSON de Google Apps Script */
 export const API_URL = 'https://script.google.com/macros/s/AKfycbyMIxQSkPgixtqnaeezNo-99H-K_aSdAmbCMCpj1Ng7nULiJX0cgZvBvsPE8Am7czLI/exec'; // <-- PEGA TU NUEVA URL ACA
-const FETCH_TIMEOUT = 15000;
 
 export function normalizeImageUrl(url) {
   if (!url || typeof url !== 'string') return '';
@@ -35,18 +34,17 @@ export function normalizeProduct(raw) {
     talles: String(raw.talles ?? raw.Talles ?? '').split(',').map(t => t.trim()).filter(Boolean),
     precioUnidad: parseFloat(raw.precio_unidad ?? raw.preciounidad ?? 0) || 0,
     precioBulto: parseFloat(raw.precio_bulto ?? raw.preciobulto ?? 0) || 0,
-    descBulto: String(raw.desc_bulto ?? raw.descbulto ?? 'bulto').trim(),
   };
 }
 
 export async function fetchProducts() {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
   try {
-    const response = await fetch(API_URL, { method: 'GET', signal: controller.signal });
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error('Error de red');
     const data = await response.json();
     return data.map(normalizeProduct).filter(Boolean);
-  } finally {
-    clearTimeout(timeoutId);
+  } catch (error) {
+    console.error("Error al obtener productos:", error);
+    throw error;
   }
 }
