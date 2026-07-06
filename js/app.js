@@ -21,7 +21,6 @@ function renderProducts(products) {
       </div>
     `;
 
-    // Conectar evento para abrir el modal al hacer clic en la tarjeta
     card.addEventListener('click', () => openModal(product));
     productsGrid.appendChild(card);
   });
@@ -34,11 +33,36 @@ function openModal(product) {
   // 1. Textos e imagen principal
   document.getElementById('modalTitle').textContent = product.nombre;
   document.getElementById('modalDesc').textContent = product.descripcion || '';
-  document.getElementById('modalMainImg').src = product.imagenes[0] || '';
   
+  const modalMainImg = document.getElementById('modalMainImg');
+  modalMainImg.src = product.imagenes[0] || ''; // Portada
+
+  // 1.5 Galería de imágenes (Miniaturas)
+  const modalThumbs = document.getElementById('modalThumbs');
+  modalThumbs.innerHTML = ''; // Limpiar miniaturas anteriores
+  
+  if (product.imagenes.length > 1) {
+    product.imagenes.forEach((imgUrl, index) => {
+      const thumb = document.createElement('img');
+      thumb.src = imgUrl;
+      thumb.alt = `Miniatura ${index + 1}`;
+      if (index === 0) thumb.classList.add('active');
+      
+      // Al hacer clic en una miniatura, cambia la imagen principal
+      thumb.addEventListener('click', () => {
+        modalMainImg.src = imgUrl;
+        // Cambiar la clase activa
+        modalThumbs.querySelectorAll('img').forEach(img => img.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+      
+      modalThumbs.appendChild(thumb);
+    });
+  }
+
   // 2. Llenar "Tipo de compra" (Radio buttons)
   const modalPrices = document.getElementById('modalPrices');
-  modalPrices.innerHTML = ''; // Limpiar opciones anteriores
+  modalPrices.innerHTML = ''; 
   
   if (product.precioUnidad > 0) {
     modalPrices.innerHTML += `
@@ -49,10 +73,12 @@ function openModal(product) {
     `;
   }
   if (product.precioBulto > 0) {
+    // Aquí usamos descBulto para mostrar el texto que venga del Excel
+    const desc = product.descBulto || 'Bulto';
     modalPrices.innerHTML += `
       <label>
         <input type="radio" name="tipoCompra" value="bulto">
-        Bulto - $${product.precioBulto}
+        ${desc} - $${product.precioBulto}
       </label>
     `;
   }
@@ -60,37 +86,36 @@ function openModal(product) {
   // 3. Llenar "Color"
   const colorGroup = document.getElementById('colorGroup');
   const colorSelect = document.getElementById('modalColor');
-  colorSelect.innerHTML = ''; // Limpiar opciones anteriores
+  colorSelect.innerHTML = ''; 
   
   if (product.colores && product.colores.length > 0) {
-    colorGroup.hidden = false; // Mostrar el grupo si hay colores
+    colorGroup.hidden = false;
     product.colores.forEach(color => {
       colorSelect.innerHTML += `<option value="${color}">${color}</option>`;
     });
   } else {
-    colorGroup.hidden = true; // Ocultar si este producto no tiene colores
+    colorGroup.hidden = true;
   }
 
   // 4. Llenar "Talle"
   const sizeGroup = document.getElementById('sizeGroup');
   const sizeSelect = document.getElementById('modalSize');
-  sizeSelect.innerHTML = ''; // Limpiar opciones anteriores
+  sizeSelect.innerHTML = ''; 
   
   if (product.talles && product.talles.length > 0) {
-    sizeGroup.hidden = false; // Mostrar el grupo si hay talles
+    sizeGroup.hidden = false;
     product.talles.forEach(talle => {
       sizeSelect.innerHTML += `<option value="${talle}">${talle}</option>`;
     });
   } else {
-    sizeGroup.hidden = true; // Ocultar si este producto no tiene talles
+    sizeGroup.hidden = true;
   }
 
   // 5. Lógica del selector de Cantidad (+ y -)
   let qty = 1;
   const qtyVal = document.getElementById('modalQtyVal');
-  qtyVal.textContent = qty; // Resetear a 1 al abrir
+  qtyVal.textContent = qty;
 
-  // Remover eventos anteriores para evitar que se sumen múltiples veces
   const btnMinus = document.getElementById('modalQtyMinus');
   const btnPlus = document.getElementById('modalQtyPlus');
   
@@ -109,7 +134,7 @@ function openModal(product) {
   // Mostrar el modal
   modal.hidden = false;
   
-  // Lógica para cerrar el modal
+  // Cerrar el modal
   document.getElementById('closeModal').onclick = () => {
     modal.hidden = true;
   };
@@ -121,19 +146,16 @@ async function init() {
     
     if (!products || products.length === 0) throw new Error("No hay productos");
 
-    // Éxito: Ocultar carga y mostrar la grilla
     loadingState.style.display = 'none';
     productsGrid.hidden = false;
     
     renderProducts(products);
 
   } catch (error) {
-    // Error: Ocultar carga y mostrar botón de reintentar
     loadingState.style.display = 'none';
     errorState.hidden = false;
     console.error("Error al inicializar:", error);
   }
 }
 
-// Iniciar aplicación
 document.addEventListener('DOMContentLoaded', init);
