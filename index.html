@@ -12,12 +12,15 @@
 </head>
 <body>
 
+  <!-- Overlay del carrito -->
   <div class="cart-overlay" id="cartOverlay" aria-hidden="true"></div>
 
+  <!-- Header Original -->
   <header class="header">
     <div class="header__inner container">
       <a href="#" class="header__logo" aria-label="Maravibewear — Inicio">
-        <img src="https://drive.google.com/thumbnail?id=110PUZNIxNsSS9wk2g3EGyMkhLAKJmfpt&sz=w1000" alt="Maravibewear" class="header__logo-img">
+        <!-- Reemplaza TU_ID_AQUI por el ID de Google Drive de tu logo, o usa image_a5281a.png -->
+        <img src="https://drive.google.com/thumbnail?id=TU_ID_AQUI&sz=w1000" alt="Maravibewear" class="header__logo-img">
       </a>
 
       <nav class="header__nav" aria-label="Navegación principal">
@@ -31,18 +34,35 @@
     </div>
   </header>
 
-  <main>
+  <!-- Contenido principal -->
+  <main class="main">
     <section id="productos" class="container">
+      
+      <!-- Contenedor de Carga con Animación Original -->
+      <div id="loadingState" class="state loading-container">
+        <div class="spinner"></div>
+        <p>Cargando productos...</p>
+      </div>
+
+      <!-- Contenedor de Error -->
+      <div id="errorState" class="state" hidden>
+        <p>Error al cargar.</p>
+        <button onclick="location.reload()" class="btn btn--secondary">Reintentar</button>
+      </div>
+
+      <!-- Filtros (Opcional) -->
       <div id="filtersSection" hidden>
         <div id="categoryFilters" class="filters"></div>
       </div>
-      <div id="loadingState">Cargando productos...</div>
-      <div id="errorState" hidden>Error al cargar. <button id="retryBtn">Reintentar</button></div>
-      <div id="productsGrid" class="products-grid"></div>
-      <div id="emptyState" hidden>No hay productos disponibles.</div>
+
+      <!-- Grilla de Productos -->
+      <div id="productsGrid" class="products-grid" hidden></div>
+      <div id="emptyState" class="state" hidden>No hay productos disponibles en esta categoría.</div>
+
     </section>
   </main>
 
+  <!-- Modal de Producto -->
   <div class="modal-overlay" id="productModal" hidden>
     <div class="modal-content">
       <button class="modal-close" id="closeModal" aria-label="Cerrar">&times;</button>
@@ -76,13 +96,27 @@
               <span id="modalQtyVal">1</span>
               <button id="modalQtyPlus">&plus;</button>
             </div>
-            <button id="modalAddToCart" class="btn btn-primary">Agregar al carrito</button>
+            <button id="modalAddToCart" class="btn btn--primary">Agregar al carrito</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Footer Original -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <img src="https://drive.google.com/thumbnail?id=TU_ID_AQUI&sz=w1000" alt="Maravibewear" class="footer__logo-img">
+        <p class="footer__tagline">Lencería y comodidad para tu día a día.</p>
+      </div>
+    </div>
+    <div class="footer__bottom container">
+      <p>&copy; 2026 Maravibewear. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
