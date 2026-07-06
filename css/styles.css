@@ -89,9 +89,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .qty-selector button { padding: 8px 16px; font-size: 18px; color: var(--color-text); }
 .qty-selector span { padding: 0 16px; font-weight: 600; }
 
-/* --- Footer Original --- */
-.footer { background: var(--color-text); color: rgba(255, 255, 255, 0.85); padding-top: 48px; }
-.footer__inner { padding-bottom: 32px; }
-.footer__logo-img { height: 60px; width: auto; display: block; filter: brightness(0) invert(1); margin-bottom: 16px; }
-.footer__tagline { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
-.footer__bottom { padding-block: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 13px; color: rgba(255, 255, 255, 0.4); text-align: center; }
+/* Reseteamos los estilos de la imagen del footer */
+.footer-logo-img {
+    display: block;
+    width: 150px;       /* Ajusta el tamaño a tu gusto */
+    height: auto;       /* Mantiene la proporción */
+    border-radius: 0;   /* Elimina el círculo */
+    filter: brightness(0) invert(1); /* Vuelve el logo blanco para el fondo oscuro */
+    margin-bottom: 12px;
+}
