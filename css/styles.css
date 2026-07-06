@@ -18,7 +18,7 @@
   /* PUNTO 5: ACÁ SE AJUSTAN LAS TIPOGRAFÍAS */
   /* Si querés cambiar la fuente principal o la de los títulos, cambiás el nombre acá (ej. 'Montserrat', 'Lato') */
   --font-body: 'Montserrat', system-ui, sans-serif;
-  --font-display: 'Montserrat', serif;
+  --font-display: 'Montserrat', sans-serif;
   
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
