@@ -28,8 +28,29 @@ function aplicarLogo() {
 function updateCartBadge() {
   const badge = document.getElementById('cartBadge');
   if (!badge) return;
-  const carrito = JSON.parse(localStorage.getItem('maravibewear_cart')) || [];
-  const total = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+
+  // Intentamos obtener el carrito
+  const data = localStorage.getItem('maravibewear_cart');
+  let carrito = [];
+
+  try {
+    // Si hay datos, intentamos convertirlos
+    if (data) {
+      carrito = JSON.parse(data);
+      // Validamos que sea realmente un array
+      if (!Array.isArray(carrito)) {
+        carrito = [];
+        localStorage.removeItem('maravibewear_cart'); // Borramos lo corrupto
+      }
+    }
+  } catch (e) {
+    // Si hubo error al parsear, limpiamos
+    carrito = [];
+    localStorage.removeItem('maravibewear_cart');
+  }
+
+  // Ahora sí, hacemos el reduce de forma segura
+  const total = carrito.reduce((acc, item) => acc + (item.cantidad || 0), 0);
   badge.textContent = total;
 }
 
