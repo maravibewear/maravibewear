@@ -35,7 +35,7 @@ export function addToCart(product, quantity, options) {
 export function updateQuantity(variantId, newQty) {
   const item = cart.find(i => i.variantId === variantId);
   if (item) {
-    item.cantidad = Math.max(1, newQty);
+    item.cantidad = Math.max(1, newQty); // Evita que baje de 1
     saveCart();
   }
 }
@@ -64,6 +64,7 @@ export function renderCart(bodyEl, footerEl, totalEl, badgeEl) {
     footerEl.hidden = true;
     return;
   }
+  
   footerEl.hidden = false;
   const total = cart.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   totalEl.textContent = formatPrice(total);
@@ -94,6 +95,40 @@ export function renderCart(bodyEl, footerEl, totalEl, badgeEl) {
       </div>
     </div>`;
   }).join('');
+
+  // --- ASIGNACIÓN DIRECTA DE EVENTOS A LOS BOTONES DEL CARRITO ---
+  
+  // Botón Restar
+  bodyEl.querySelectorAll('.qty-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vid = btn.dataset.vid;
+      const item = cart.find(i => i.variantId === vid);
+      if (item) {
+        updateQuantity(vid, item.cantidad - 1);
+        renderCart(bodyEl, footerEl, totalEl, badgeEl); // Volvemos a dibujar
+      }
+    });
+  });
+
+  // Botón Sumar
+  bodyEl.querySelectorAll('.qty-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vid = btn.dataset.vid;
+      const item = cart.find(i => i.variantId === vid);
+      if (item) {
+        updateQuantity(vid, item.cantidad + 1);
+        renderCart(bodyEl, footerEl, totalEl, badgeEl); // Volvemos a dibujar
+      }
+    });
+  });
+
+  // Botón Eliminar
+  bodyEl.querySelectorAll('.remove-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      removeFromCart(btn.dataset.vid);
+      renderCart(bodyEl, footerEl, totalEl, badgeEl); // Volvemos a dibujar
+    });
+  });
 }
 
 export function sendWhatsAppOrder() {
