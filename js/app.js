@@ -8,7 +8,7 @@ const errorState = document.getElementById('errorState');
 const productsGrid = document.getElementById('productsGrid');
 const categoryFilters = document.getElementById('categoryFilters');
 
-let allProducts = []; // Guardamos los productos para el filtro
+let allProducts = []; 
 
 function aplicarLogo() {
   const favicon = document.getElementById('favicon');
@@ -33,12 +33,11 @@ function updateCartUI() {
   }
 }
 
-// NUEVO: Renderiza los botones de categorías
 function renderCategoryFilters(products) {
   if (!categoryFilters) return;
   const categories = ['Todas', ...new Set(products.map(p => p.categoria).filter(Boolean))];
   
-  if (categories.length <= 2) { // Si solo hay "Todas" y 1 categoría, ocultar
+  if (categories.length <= 2) { 
     categoryFilters.hidden = true;
     return;
   }
@@ -50,11 +49,9 @@ function renderCategoryFilters(products) {
 
   categoryFilters.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      // Remover clase active de todos y dar al clickeado
       categoryFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       
-      // Filtrar y renderizar
       const cat = e.target.dataset.cat;
       const filtered = cat === 'Todas' ? products : products.filter(p => p.categoria === cat);
       renderProducts(filtered);
@@ -70,6 +67,16 @@ function renderProducts(products) {
   }
   
   products.forEach(product => {
+    // Armamos el bloque de precios en formato doble fila
+    let priceHTML = '';
+    if (product.precioUnidad > 0) {
+      priceHTML += `<div class="product-card__price-row">$${product.precioUnidad} - Unidad</div>`;
+    }
+    if (product.precioBulto > 0) {
+      const textoBulto = product.descBulto || 'Bulto';
+      priceHTML += `<div class="product-card__price-row">$${product.precioBulto} - ${textoBulto}</div>`;
+    }
+
     const card = document.createElement('article');
     card.className = 'product-card';
     card.innerHTML = `
@@ -78,7 +85,9 @@ function renderProducts(products) {
       </div>
       <div class="product-card__body">
         <h3 class="product-card__name">${product.nombre}</h3>
-        <p class="product-card__price">$${product.precioUnidad > 0 ? product.precioUnidad : product.precioBulto}</p>
+        <div class="product-card__price-container">
+          ${priceHTML}
+        </div>
       </div>
     `;
 
@@ -133,7 +142,6 @@ function openModal(product) {
     `;
   }
 
-  // Lógica Correlativa Color/Talle
   const colorGroup = document.getElementById('colorGroup');
   const colorSelect = document.getElementById('modalColor');
   const sizeGroup = document.getElementById('sizeGroup');
@@ -151,7 +159,6 @@ function openModal(product) {
     });
   } else { colorGroup.hidden = true; }
 
-  // Función que actualiza talles según el color elegido
   const updateSizes = () => {
     sizeSelect.innerHTML = '';
     let availableSizes = product.talles;
@@ -173,10 +180,9 @@ function openModal(product) {
 
   if (product.talles && product.talles.length > 0) {
     if (hasVariantes) {
-      // Si cambia el color, actualizamos los talles
       colorSelect.addEventListener('change', updateSizes);
     }
-    updateSizes(); // Render inicial
+    updateSizes(); 
   } else {
     sizeGroup.hidden = true;
   }
@@ -253,8 +259,8 @@ async function init() {
     loadingState.style.display = 'none';
     productsGrid.hidden = false;
     
-    renderCategoryFilters(allProducts); // Renderizamos filtros
-    renderProducts(allProducts); // Renderizamos todo
+    renderCategoryFilters(allProducts); 
+    renderProducts(allProducts); 
 
   } catch (error) {
     loadingState.style.display = 'none';
