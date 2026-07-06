@@ -67,7 +67,6 @@ function renderProducts(products) {
   }
   
   products.forEach(product => {
-    // Armamos el bloque de precios en formato doble fila
     let priceHTML = '';
     if (product.precioUnidad > 0) {
       priceHTML += `<div class="product-card__price-row">$${product.precioUnidad} - Unidad</div>`;
@@ -147,17 +146,20 @@ function openModal(product) {
   const sizeGroup = document.getElementById('sizeGroup');
   const sizeSelect = document.getElementById('modalSize');
   
-  colorSelect.innerHTML = ''; 
-  sizeSelect.innerHTML = '';
-
   const hasVariantes = Object.keys(product.variantes || {}).length > 0;
 
-  if (product.colores && product.colores.length > 0) {
-    colorGroup.hidden = false;
-    product.colores.forEach(color => {
-      colorSelect.innerHTML += `<option value="${color}">${color}</option>`;
-    });
-  } else { colorGroup.hidden = true; }
+  // Funciones separadas para armar las listas normales
+  const populateColors = () => {
+    colorSelect.innerHTML = ''; 
+    if (product.colores && product.colores.length > 0) {
+      colorGroup.hidden = false;
+      product.colores.forEach(color => {
+        colorSelect.innerHTML += `<option value="${color}">${color}</option>`;
+      });
+    } else { 
+      colorGroup.hidden = true; 
+    }
+  };
 
   const updateSizes = () => {
     sizeSelect.innerHTML = '';
@@ -178,14 +180,48 @@ function openModal(product) {
     }
   };
 
-  if (product.talles && product.talles.length > 0) {
-    if (hasVariantes) {
-      colorSelect.addEventListener('change', updateSizes);
+  // Función que decide si mostrar "A COORDINAR" o las opciones normales
+  const handlePurchaseTypeChange = () => {
+    const radioSeleccionado = document.querySelector('input[name="tipoCompra"]:checked');
+    
+    if (radioSeleccionado && radioSeleccionado.value === 'bulto') {
+      // Bloqueo para Bulto/Pack
+      if (product.colores && product.colores.length > 0) {
+        colorGroup.hidden = false;
+        colorSelect.innerHTML = '<option value="A COORDINAR">A COORDINAR</option>';
+        colorSelect.disabled = true;
+      }
+      if (product.talles && product.talles.length > 0) {
+        sizeGroup.hidden = false;
+        sizeSelect.innerHTML = '<option value="A COORDINAR">A COORDINAR</option>';
+        sizeSelect.disabled = true;
+      }
+    } else {
+      // Desbloqueo para Unidad
+      colorSelect.disabled = false;
+      sizeSelect.disabled = false;
+      populateColors();
+      updateSizes();
     }
-    updateSizes(); 
-  } else {
-    sizeGroup.hidden = true;
+  };
+
+  // Asignamos el evento de cambio a los radios de precio
+  const radios = modalPrices.querySelectorAll('input[name="tipoCompra"]');
+  radios.forEach(radio => radio.addEventListener('change', handlePurchaseTypeChange));
+
+  // Asignamos el evento de cambio de color para la correlación de talles
+  if (hasVariantes) {
+    colorSelect.addEventListener('change', () => {
+      const radioSeleccionado = document.querySelector('input[name="tipoCompra"]:checked');
+      // Solo actualizamos talles si no estamos en modo "bulto"
+      if (radioSeleccionado && radioSeleccionado.value !== 'bulto') {
+        updateSizes();
+      }
+    });
   }
+
+  // Ejecutamos la lógica una vez para que se configure según la opción que venga marcada por defecto
+  handlePurchaseTypeChange();
 
   let qty = 1;
   const qtyVal = document.getElementById('modalQtyVal');
